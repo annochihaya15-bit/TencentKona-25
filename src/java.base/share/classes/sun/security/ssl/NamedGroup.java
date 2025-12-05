@@ -214,6 +214,12 @@ enum NamedGroup {
             ProtocolVersion.PROTOCOLS_TO_13,
             PredefinedDHParameterSpecs.ffdheParams.get(8192)),
 
+    // ShangMi curve defined by RFC 8998
+    CURVESM2(0x0029, "curvesm2",
+            NamedGroupSpec.NAMED_GROUP_ECDHE,
+            ProtocolVersion.PROTOCOLS_TO_13,
+            CurveDB.lookup("curvesm2")),
+
     // Elliptic Curves (RFC 4492)
     //
     // arbitrary prime and characteristic-2 curves
@@ -801,6 +807,9 @@ enum NamedGroup {
                         FFDHE_4096,
                         FFDHE_6144,
                         FFDHE_8192,
+
+                        // ShangMi curve last
+                        CURVESM2
                     };
 
                 groupList = new ArrayList<>(groups.length);

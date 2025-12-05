@@ -60,7 +60,8 @@ abstract class HKDFKeyDerivation extends KDFSpi {
     private enum SupportedHmac {
         SHA256("HmacSHA256", 32),
         SHA384("HmacSHA384", 48),
-        SHA512("HmacSHA512", 64);
+        SHA512("HmacSHA512", 64),
+        SM3("HmacSM3", 32);
 
         private final String hmacAlg;
         private final int hmacLen;
@@ -411,4 +412,10 @@ abstract class HKDFKeyDerivation extends KDFSpi {
         }
     }
 
+    public static final class HKDFSM3 extends HKDFKeyDerivation {
+        public HKDFSM3(KDFParameters kdfParameters)
+                throws InvalidAlgorithmParameterException {
+            super(SupportedHmac.SM3, kdfParameters);
+        }
+    }
 }
