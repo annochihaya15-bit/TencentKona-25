@@ -465,6 +465,8 @@ final class ClientHello {
             }
 
             if (session != null &&
+                // TLCP 1.1 doesn't apply ExtendedMasterSecret
+                !sessionVersion.isTLCP11() &&
                 !sessionVersion.useTLS13PlusSpec() &&
                 SSLConfiguration.useExtendedMasterSecret) {
 

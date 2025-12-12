@@ -337,7 +337,7 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      * Return the list of all available CipherSuites that are default enabled
      * in client or server side.
      */
-    private static List<CipherSuite> getApplicableEnabledCipherSuites(
+    static List<CipherSuite> getApplicableEnabledCipherSuites(
             List<ProtocolVersion> protocols, boolean isClient) {
 
         if (isClient) {
@@ -463,7 +463,7 @@ public abstract class SSLContextImpl extends SSLContextSpi {
     }
 
 
-    private static List<ProtocolVersion> getAvailableProtocols(
+    static List<ProtocolVersion> getAvailableProtocols(
             ProtocolVersion[] protocolCandidates) {
 
         List<ProtocolVersion> availableProtocols =
@@ -518,7 +518,7 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      *
      * @see SSLContext
      */
-    private abstract static class AbstractTLSContext extends SSLContextImpl {
+    abstract static class AbstractTLSContext extends SSLContextImpl {
         private static final List<ProtocolVersion> supportedProtocols;
         private static final List<ProtocolVersion> serverDefaultProtocols;
 
@@ -717,7 +717,7 @@ public abstract class SSLContextImpl extends SSLContextSpi {
      *
      * @see SSLContext
      */
-    private static class CustomizedSSLProtocols {
+    static class CustomizedSSLProtocols {
         private static final String JDK_TLS_CLIENT_PROTOCOLS =
                 "jdk.tls.client.protocols";
         private static final String JDK_TLS_SERVER_PROTOCOLS =

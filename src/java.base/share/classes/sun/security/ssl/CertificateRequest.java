@@ -62,7 +62,7 @@ final class CertificateRequest {
         new T13CertificateRequestProducer();
 
     // TLS 1.2 and prior versions
-    private enum ClientCertificateType {
+    enum ClientCertificateType {
         // RFC 2246
         RSA_SIGN            ((byte)0x01, "rsa_sign", List.of("RSA"), true),
         DSS_SIGN            ((byte)0x02, "dss_sign", List.of("DSA"), true),
@@ -108,7 +108,7 @@ final class CertificateRequest {
             this.isAvailable = isAvailable;
         }
 
-        private static String nameOf(byte id) {
+        static String nameOf(byte id) {
             for (ClientCertificateType cct : ClientCertificateType.values()) {
                 if (cct.id == id) {
                     return cct.name;
@@ -127,7 +127,7 @@ final class CertificateRequest {
             return null;
         }
 
-        private static String[] getKeyTypes(byte[] ids) {
+        static String[] getKeyTypes(byte[] ids) {
             ArrayList<String> keyTypes = new ArrayList<>(3);
             for (byte id : ids) {
                 ClientCertificateType cct = ClientCertificateType.valueOf(id);
