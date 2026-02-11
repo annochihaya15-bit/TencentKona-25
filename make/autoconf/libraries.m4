@@ -36,6 +36,8 @@ m4_include([lib-x11.m4])
 
 m4_include([lib-tests.m4])
 
+m4_include([lib-openssl.m4])
+
 ################################################################################
 # Determine which libraries are needed for this configuration
 ################################################################################
@@ -122,6 +124,8 @@ AC_DEFUN_ONCE([LIB_SETUP_LIBRARIES],
   LIB_SETUP_X11
 
   LIB_TESTS_SETUP_GTEST
+
+  LIB_SETUP_OPENSSL
 
   # Math library
   BASIC_JVM_LIBS="$LIBM"

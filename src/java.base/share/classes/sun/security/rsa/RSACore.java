@@ -139,8 +139,23 @@ public final class RSACore {
     private static byte[] crypt(byte[] msg, BigInteger n, BigInteger exp)
             throws BadPaddingException {
         BigInteger m = parseMsg(msg, n);
-        BigInteger c = m.modPow(exp, n);
+        BigInteger c = modPow(m, exp, n);
         return toByteArray(c, getByteLength(n));
+    }
+
+    private static BigInteger modPow(BigInteger base, BigInteger exponent,
+            BigInteger modulus) {
+        return NativeSunRsaSign.isNativeCryptoEnabled()
+                ? modPowNative(base, exponent, modulus)
+                : base.modPow(exponent, modulus);
+    }
+
+    private static BigInteger modPowNative(BigInteger base, BigInteger exponent,
+            BigInteger modulus) {
+        byte[] result = new byte[getByteLength(modulus)];
+        NativeSunRsaSign.rsaModPow(base.toByteArray(), exponent.toByteArray(),
+                modulus.toByteArray(), result);
+        return new BigInteger(1, result);
     }
 
     /**

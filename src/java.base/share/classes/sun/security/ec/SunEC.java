@@ -122,7 +122,8 @@ public final class SunEC extends Provider {
                         return (inP1363? new ECDSASignature.SHA3_512inP1363Format() :
                             new ECDSASignature.SHA3_512());
                     } else if (algo.equals("SM3withSM2")) {
-                        return new SM2Signature();
+                        return NativeSunEC.isNativeCryptoEnabled()
+                                ? new SM2SignatureNative() : new SM2Signature();
                     }
                 } else if (type.equals("KeyFactory")) {
                     if (algo.equals("EC")) {
@@ -172,7 +173,8 @@ public final class SunEC extends Provider {
                     } else if (algo.equals("X448")) {
                         return new XDHKeyAgreement.X448();
                     } else if (algo.equals("SM2")) {
-                        return new SM2KeyAgreement();
+                        return NativeSunEC.isNativeCryptoEnabled()
+                                ? new SM2KeyAgreementNative() : new SM2KeyAgreement();
                     }
                 } else if (type.equals("Cipher")) {
                     if (algo.equals("SM2")) {
@@ -392,10 +394,17 @@ public final class SunEC extends Provider {
 
         putService(new ProviderService(this, "KeyFactory",
                 "SM2", "sun.security.ec.SM2KeyFactory", null, ATTRS));
+        String sm2Signature = NativeSunEC.isNativeCryptoEnabled()
+                ? "sun.security.ec.SM2SignatureNative"
+                : "sun.security.ec.SM2Signature";
         putService(new ProviderService(this, "Signature",
-                "SM3withSM2", "sun.security.ec.SM2Signature", List.of("SM2"), ATTRS));
+                "SM3withSM2", sm2Signature, List.of("SM2"), ATTRS));
+
+        String sm2KeyAgreement = NativeSunEC.isNativeCryptoEnabled()
+                ? "sun.security.ec.SM2KeyAgreementNative"
+                : "sun.security.ec.SM2KeyAgreement";
         putService(new ProviderService(this, "KeyAgreement",
-                "SM2", "sun.security.ec.SM2KeyAgreement", null, ATTRS));
+                "SM2", sm2KeyAgreement, null, ATTRS));
         putService(new ProviderService(this, "Cipher",
                 "SM2", "sun.security.ec.SM2Cipher", null, ATTRS));
     }

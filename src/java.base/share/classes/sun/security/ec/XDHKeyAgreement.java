@@ -25,8 +25,10 @@
 
 package sun.security.ec;
 
+import sun.security.util.ArrayUtil;
 import sun.security.util.KeyUtil;
 
+import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -142,11 +144,17 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
             "Public key parameters are not compatible with private key.");
         }
 
-        // The privateKey may be modified to a value that is equivalent for
-        // the purposes of this algorithm.
-        byte[] computedSecret = ops.encodedPointMultiply(
-            this.privateKey,
-            publicKey.getU());
+        byte[] computedSecret = null;
+        if (NativeSunEC.useNativeXDH(xecParams.getName())) {
+            computedSecret = deriveKeyNative(xecParams,
+                    privateKey, publicKey.getU());
+        } else {
+            // The privateKey may be modified to a value that is equivalent for
+            // the purposes of this algorithm.
+            computedSecret = ops.encodedPointMultiply(
+                    this.privateKey,
+                    publicKey.getU());
+        }
 
         // test for contributory behavior
         if (allZero(computedSecret)) {
@@ -156,6 +164,26 @@ public class XDHKeyAgreement extends KeyAgreementSpi {
         this.secret = computedSecret;
 
         return null;
+    }
+
+    private byte[] deriveKeyNative(XECParameters xecParams,
+            byte[] privateKey, BigInteger u) throws InvalidKeyException {
+        int curveNID = NativeSunEC.getXECCurveNID(xecParams.getName());
+
+        int keySize = xecParams.getBytes();
+        byte[] publicKeyU = NativeSunEC.padZerosForValue(
+                u.toByteArray(), keySize);
+        // OpenSSL needs U in little-endian array
+        ArrayUtil.reverse(publicKeyU);
+        byte[] sharedKeyOut = new byte[keySize];
+        try {
+            NativeSunEC.xdhDeriveKey(curveNID, privateKey, publicKeyU, sharedKeyOut);
+            return sharedKeyOut;
+        } catch (InvalidKeyException | IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Derive key failed", e);
+        }
     }
 
     /*
