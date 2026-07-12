@@ -25,6 +25,9 @@
 
 package jdk.internal.misc;
 
+import jdk.internal.event.JavaNativeAllocationEvent;
+import jdk.internal.event.JavaNativeFreeEvent;
+import jdk.internal.event.JavaNativeReallocateEvent;
 import jdk.internal.ref.Cleaner;
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.vm.annotation.IntrinsicCandidate;
@@ -638,6 +641,10 @@ public final class Unsafe {
             throw new OutOfMemoryError("Unable to allocate " + bytes + " bytes");
         }
 
+        if (JavaNativeAllocationEvent.enabled()) {
+            JavaNativeAllocationEvent.commit(0L, 0L, p, bytes);
+        }
+
         return p;
     }
 
@@ -692,6 +699,10 @@ public final class Unsafe {
         long p = (address == 0) ? allocateMemory0(bytes) : reallocateMemory0(address, bytes);
         if (p == 0) {
             throw new OutOfMemoryError("Unable to allocate " + bytes + " bytes");
+        }
+
+        if (JavaNativeReallocateEvent.enabled()) {
+            JavaNativeReallocateEvent.commit(0L, 0L, address, p, bytes);
         }
 
         return p;
@@ -927,7 +938,12 @@ public final class Unsafe {
             return;
         }
 
+        long freedAddress = address;
         freeMemory0(address);
+
+        if (JavaNativeFreeEvent.enabled()) {
+            JavaNativeFreeEvent.commit(0L, 0L, freedAddress);
+        }
     }
 
     /**
