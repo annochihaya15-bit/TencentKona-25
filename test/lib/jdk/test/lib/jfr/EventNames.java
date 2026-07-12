@@ -215,6 +215,9 @@ public class EventNames {
     public static final String SecurityProviderService = PREFIX + "SecurityProviderService";
     public static final String DirectBufferStatistics = PREFIX + "DirectBufferStatistics";
     public static final String Deserialization = PREFIX + "Deserialization";
+    public static final String JavaNativeAllocation = PREFIX + "JavaNativeAllocation";
+    public static final String JavaNativeFree = PREFIX + "JavaNativeFree";
+    public static final String JavaNativeReallocate = PREFIX + "JavaNativeReallocate";
     public static final String SerializationMisdeclaration = PREFIX + "SerializationMisdeclaration";
     public static final String VirtualThreadStart = PREFIX + "VirtualThreadStart";
     public static final String VirtualThreadEnd = PREFIX + "VirtualThreadEnd";
