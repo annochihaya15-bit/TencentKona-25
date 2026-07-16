@@ -23,11 +23,12 @@
 package org.openjdk.bench.sun.misc;
 
 import java.lang.reflect.Field;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 import jdk.jfr.Recording;
-import jdk.jfr.consumer.RecordedEvent;
-import jdk.jfr.consumer.RecordingFile;
 
 import jdk.internal.misc.Unsafe;
 import org.openjdk.jmh.annotations.Benchmark;
@@ -54,7 +55,7 @@ import org.openjdk.jmh.annotations.Warmup;
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
-@Fork(value = 3, jvmArgs = {"-Xms1g", "-Xmx1g"})
+@Fork(value = 3, jvmArgs = {"-Xms1g", "-Xmx1g", "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED"})
 @Warmup(iterations = 5, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @Measurement(iterations = 10, time = 500, timeUnit = TimeUnit.MILLISECONDS)
 @SuppressWarnings("removal")
@@ -83,15 +84,18 @@ public class UnsafeMemoryEvents {
     }
 
     private Recording recording;
+    private Path recordingFile;
     private long lastAllocAddr;
 
     @Setup(Level.Trial)
-    public void startRecording() {
+    public void startRecording() throws IOException {
         if (eventsEnabled) {
             recording = new Recording();
             recording.enable("jdk.JavaNativeAllocation");
             recording.enable("jdk.JavaNativeFree");
             recording.enable("jdk.JavaNativeReallocate");
+            recordingFile = Files.createTempFile("jfr-recording", ".jfr");
+            recording.setToDisk(true);
             recording.start();
         }
     }
@@ -100,22 +104,10 @@ public class UnsafeMemoryEvents {
     public void stopRecording() throws Exception {
         if (recording != null) {
             recording.stop();
-            // Drain the recording so the JVM shuts down cleanly.
-            var path = recording.getDestination().toPath();
-            if (path != null && java.nio.file.Files.exists(path)) {
-                try (var stream = RecordingFile.readAllEvents(path)) {
-                    int count = 0;
-                    for (RecordedEvent ignored : stream) {
-                        count++;
-                    }
-                    // The events count is exposed to prevent the JIT from
-                    // eliminating the read loop entirely.
-                    if (count < 0) {
-                        throw new IllegalStateException();
-                    }
-                }
-            }
             recording.close();
+        }
+        if (recordingFile != null) {
+            Files.deleteIfExists(recordingFile);
         }
     }
 
@@ -145,9 +137,7 @@ public class UnsafeMemoryEvents {
 
     @Benchmark
     public void freeMemory() {
-        // Alloc happens outside the benchmark method when measuring free alone
-        // is meaningful; here we always pair with an alloc to keep addresses
-        // valid.
+        // Pairs allocation with free to ensure valid addresses.
         long addr = U.allocateMemory(size);
         U.freeMemory(addr);
     }
