@@ -633,6 +633,9 @@ public final class Unsafe {
         allocateMemoryChecks(bytes);
 
         if (bytes == 0) {
+            if (JavaNativeAllocationEvent.enabled()) {
+                JavaNativeAllocationEvent.commit(0L, 0L, 0L, bytes);
+            }
             return 0;
         }
 
@@ -935,6 +938,9 @@ public final class Unsafe {
         freeMemoryChecks(address);
 
         if (address == 0) {
+            if (JavaNativeFreeEvent.enabled()) {
+                JavaNativeFreeEvent.commit(0L, 0L, 0L);
+            }
             return;
         }
 

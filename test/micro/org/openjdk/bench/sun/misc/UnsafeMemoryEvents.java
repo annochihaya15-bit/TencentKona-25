@@ -51,6 +51,15 @@ import org.openjdk.jmh.annotations.Warmup;
  * with JFR disabled (the default state) and with a {@link Recording} that
  * has the three native-memory events enabled, so the cost of the event
  * emission can be quantified.
+ *
+ * <p>Boundary cases tested:
+ * <ul>
+ *   <li>{@code allocateMemory(0)} - zero-size allocation</li>
+ *   <li>{@code freeMemory(0)} - free null address</li>
+ *   <li>{@code reallocateMemory(0, N)} - reallocate from null</li>
+ *   <li>{@code reallocateMemory(addr, 0)} - reallocate to zero size</li>
+ *   <li>{@code reallocateMemory(0, 0)} - reallocate from null to zero</li>
+ * </ul>
  */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
@@ -61,7 +70,7 @@ import org.openjdk.jmh.annotations.Warmup;
 @SuppressWarnings("removal")
 public class UnsafeMemoryEvents {
 
-    @Param({"64", "1024"})
+    @Param({"0", "64", "1024"})
     public int size;
 
     /**
@@ -113,19 +122,15 @@ public class UnsafeMemoryEvents {
 
     @Benchmark
     public long allocateAndFreeMemory() {
-        long addr = U.allocateMemory(size);
-        lastAllocAddr = addr;
-        U.freeMemory(addr);
-        return addr;
-    }
-
-    @Benchmark
-    public long reallocateMemory() {
-        long addr = U.allocateMemory(size);
-        long reallocAddr = U.reallocateMemory(addr, size);
-        lastAllocAddr = reallocAddr;
-        U.freeMemory(reallocAddr);
-        return reallocAddr;
+        if (size > 0) {
+            long addr = U.allocateMemory(size);
+            lastAllocAddr = addr;
+            U.freeMemory(addr);
+            return addr;
+        } else {
+            U.freeMemory(0);
+            return 0;
+        }
     }
 
     @Benchmark
@@ -137,8 +142,52 @@ public class UnsafeMemoryEvents {
 
     @Benchmark
     public void freeMemory() {
-        // Pairs allocation with free to ensure valid addresses.
-        long addr = U.allocateMemory(size);
-        U.freeMemory(addr);
+        if (size > 0) {
+            long addr = U.allocateMemory(size);
+            U.freeMemory(addr);
+        } else {
+            U.freeMemory(0);
+        }
+    }
+
+    @Benchmark
+    public long reallocateMemory() {
+        if (size > 0) {
+            long addr = U.allocateMemory(size);
+            long reallocAddr = U.reallocateMemory(addr, size);
+            lastAllocAddr = reallocAddr;
+            U.freeMemory(reallocAddr);
+            return reallocAddr;
+        } else {
+            long addr = U.allocateMemory(64);
+            long reallocAddr = U.reallocateMemory(addr, 0);
+            lastAllocAddr = reallocAddr;
+            return reallocAddr;
+        }
+    }
+
+    @Benchmark
+    public long reallocateFromNull() {
+        long reallocAddr = U.reallocateMemory(0, size);
+        lastAllocAddr = reallocAddr;
+        if (reallocAddr != 0) {
+            U.freeMemory(reallocAddr);
+        }
+        return reallocAddr;
+    }
+
+    @Benchmark
+    public long reallocateToZero() {
+        long addr = U.allocateMemory(64);
+        long reallocAddr = U.reallocateMemory(addr, 0);
+        lastAllocAddr = reallocAddr;
+        return reallocAddr;
+    }
+
+    @Benchmark
+    public long reallocateNullToZero() {
+        long reallocAddr = U.reallocateMemory(0, 0);
+        lastAllocAddr = reallocAddr;
+        return reallocAddr;
     }
 }
